@@ -6,7 +6,7 @@ import './App.css';
 
 const App = () => (
   <div className="app">
-    <h1 className="bpos-heading">Choose your SPI {getSpiVersion()} POS Sample</h1>
+    <h1 className="bpos-heading">Choose your SPI {getSpiVersion()} (next-gen) POS Sample</h1>
     <nav className="homePageLink">
       <ol>
         <li>
