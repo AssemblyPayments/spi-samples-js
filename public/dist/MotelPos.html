@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Motel-POS: Assembly Payments Instore Integration Solution</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="favicon.png">
+
+    <script src="MotelPos.min.js"></script>
+</head>
+<body class="status-unpaired flow-idle">
+    <table id="layout">
+    <tr>
+        <td class="col settings" rowspan="2">
+            <h1>Settings</h1>
+            <div class="padding-1">
+                <form name="settings" id="settings-form" onSubmit="return false;">
+                    <table class="form">
+                    <tr>
+                        <th><label for="pos_id">Pos ID:</label></th>
+                        <td><input type="text" class="input" name="pos_id" id="pos_id" placeholder="Pos ID" value="MOTELPOS1" required /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="eftpos_address">EFTPOS Address:</label></th>
+                        <td><input type="text" class="input" name="eftpos_address" id="eftpos_address" placeholder="EFTPOS address" value="192.168.1.1" required /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="rcpt_from_eftpos">Receipt from EFTPOS:</label></th>
+                        <td><input type="checkbox" class="input" id="rcpt_from_eftpos" name="rcpt_from_eftpos" value="false"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="sig_flow_from_eftpos">Sig from EFTPOS:</label></th>
+                        <td><input type="checkbox" class="input" id="sig_flow_from_eftpos" name="sig_flow_from_eftpos" value="false"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="print_merchant_copy">Merchant copy:</label></th>
+                        <td><input type="checkbox" class="input" id="print_merchant_copy" name="print_merchant_copy" value="false"></td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td><button type="button" class="input no-hide" id="save_settings">Save</button></td>
+                    </tr>
+                    </table>
+                </form>
+            </div>
+            <h1>Status</h1>
+            <div class="padding-1 status">
+                <p id="status_indicator" data-status="Unpaired" data-flow="Idle">
+                    <label id="primary_status">Unpaired</label>
+                    <span>: </span>
+                    <label id="flow_status" class="flow_status">Idle</label>
+                </p>
+                <p class="paring-buttons">
+                    <button type="button" class="input" id="pair">PAIR</button>
+                    <button type="button" class="input" id="unpair">UNPAIR</button>
+                </p>
+            </div>
+
+        </td>
+        <td class="col flow">
+            <h1>Flow: <span id="flow_status_heading">Idle</span></h1>
+            <div class="padding-1">
+                <div><p id="flow_msg"></p></div>
+                <pre id="log"></pre>
+            </div>
+        </td>
+        <td class="col receipt" rowspan="2">
+            <h1>Receipt</h1>
+            <div class="padding-1">
+                <div id="receipt_output"></div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td class="col actions">
+            <h1>Actions</h1>
+
+            <div class="padding-1">
+
+                <p class="action-buttons">
+                    <button type="button" class="input" id="pair_confirm">Confirm Code</button>
+                    <button type="button" class="input" id="pair_cancel">Cancel Pairing</button>
+
+                    <button type="button" class="input" id="acct_verify">Verify account</button>
+                    <button type="button" class="input" id="preauth_open">Open Preauth</button>
+                    <button type="button" class="input" id="preauth_topup">Topup Preauth</button>
+                    <button type="button" class="input" id="preauth_topdown">Reduce Preauth</button>
+                    <button type="button" class="input" id="preauth_extend">Extend Preauth</button>
+                    <button type="button" class="input" id="preauth_complete">Complete Preauth</button>
+                    <button type="button" class="input" id="preauth_cancel">Cancel Preauth</button>
+
+                    <button type="button" class="input" id="tx_sign_accept">Accept Signature</button>
+                    <button type="button" class="input" id="tx_sign_decline">Decline Signature</button>
+                    <button type="button" class="input" id="tx_cancel">Cancel</button>
+                    <button type="button" class="input" id="ok">Ok</button>
+                    <button type="button" class="input" id="ok_cancel">Cancel</button>
+                </p>
+
+                <fieldset id="amount_input" class="input">
+                    <label for="amount">Amount (cents): </label>
+                    <input type="number" id="amount" name="amount" value="10" placeholder="Amount (cents)">
+                </fieldset>
+
+                <fieldset id="surcharge_input" class="input">
+                    <label for="surcharge">Surcharge: </label>
+                    <input type="number" id="surcharge" name="surcharge" value="0" placeholder="Surcharge (cents)">
+                </fieldset>
+
+                <fieldset id="preauth_ref_input" class="input">
+                    <label for="preauth_ref">Preauth Ref #: </label>
+                    <input type="tel" minlength="8" id="preauth_ref" name="preauth_ref" value="" placeholder="Preauth reference">
+                </fieldset>
+            </div>
+        </td>
+    </tr>
+    </table>
+
+</body>
+</html>

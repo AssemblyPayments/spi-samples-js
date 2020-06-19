@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ramen-POS: Assembly Payments Instore Integration Solution</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="favicon.png">
+
+    <script src="RamenPos.min.js"></script>
+</head>
+<body class="status-unpaired flow-idle">
+    <table id="layout">
+    <tr>
+        <td class="col settings" rowspan="2">
+            <h1>Settings</h1>
+            <div class="padding-1">
+                <form name="settings" id="settings_form">
+                    <table class="form">
+                    <tr>
+                        <th><label for="pos_id">Pos ID:</label></th>
+                        <td><input type="text" class="input" name="pos_id" id="pos_id" placeholder="POS ID" value="RAMENPOS1" required /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="pos_vendor_key">API Key:</label></th>
+                        <td><input type="text" class="input" name="pos_id" id="pos_vendor_key" placeholder="POS Vendor Key" value="RamenPosDeviceIpApiKey" required /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="serial_number">Serial #:</label></th>
+                        <td><input type="text" class="input" name="serial_number" id="serial_number" placeholder="XXX-XXX-XXX" value="" pattern="[0-9]{3}-[0-9]{3}-[0-9]{3}" minlength="11" maxlength="11" required /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="eftpos_address">EFTPOS Address:</label></th>
+                        <td><input type="text" class="input" name="eftpos_address" id="eftpos_address" placeholder="EFTPOS address" value="192.168.1.1" /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="rcpt_from_eftpos">Receipt from EFTPOS:</label></th>
+                        <td><input type="checkbox" class="input" id="rcpt_from_eftpos" name="rcpt_from_eftpos" value="1"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="sig_flow_from_eftpos">Sig from EFTPOS:</label></th>
+                        <td><input type="checkbox" class="input" id="sig_flow_from_eftpos" name="sig_flow_from_eftpos" value="1"></td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td><button type="submit" class="input no-hide" id="save_settings">Save</button></td>
+                    </tr>
+                    </table>
+                </form>
+            </div>
+            <h1>Auto Address Settings</h1>
+            <div class="padding-1 status">
+            <form name="address_settings" id="address_settings_form">
+                <table class="form">
+                    <tr>
+                        <th><label for="test_mode">Test mode:</label></th>
+                        <td><input type="checkbox" class="input" id="test_mode" name="test_mode" value="1"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="use_secure_web_sockets">Secure WebSockets:</label></th>
+                        <td><input type="checkbox" class="input" id="use_secure_web_sockets" name="use_secure_web_sockets" value="1"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="auto_resolve_eftpos_address">Auto Address:</label></th>
+                        <td><input type="checkbox" class="input" id="auto_resolve_eftpos_address" name="auto_resolve_eftpos_address" value="1"></td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td><button type="submit" class="input no-hide" id="save_address_settings">Save</button></td>
+                    </tr>
+                </table>
+            </form>
+            </div>
+            <h1>Status</h1>
+            <div class="padding-1 status">
+                <p id="status_indicator" data-status="Unpaired" data-flow="Idle">
+                    <label id="primary_status">Unpaired</label>
+                    <span>: </span>
+                    <label id="flow_status" class="flow_status">Idle</label>
+                </p>
+                <p class="paring-buttons">
+                    <button type="button" class="input" id="pair">PAIR</button>
+                    <button type="button" class="input" id="unpair">UNPAIR</button>
+                </p>
+            </div>
+        </td>
+        <td class="col flow">
+            <h1>Flow: <span id="flow_status_heading">Idle</span></h1>
+            <div class="padding-1">
+                <div><p id="flow_msg"></p></div>
+                <pre id="log"></pre>
+            </div>
+        </td>
+        <td class="col receipt" rowspan="2">
+            <h1>Receipt</h1>
+            <div class="padding-1">
+                <div id="receipt_output"></div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td class="col actions">
+            <h1>Actions</h1>
+
+            <div class="padding-1">
+
+                <p class="action-buttons">
+                    <button type="button" class="input" id="pair_confirm">Confirm Code</button>
+                    <button type="button" class="input" id="pair_cancel">Cancel Pairing</button>
+                    <button type="button" class="input" id="settle">Settle</button>
+                    <button type="button" class="input" id="settle_enq">Settle Enquiry</button>
+                    <button type="button" class="input" id="glt">Get Last Transaction</button>
+                    <button type="button" class="input" id="tx_cancel">Cancel</button>
+                    <button type="button" class="input" id="tx_auth_code">Phone Auth</button>
+                    <button type="button" class="input" id="recover">Recover</button>
+                    <button type="button" class="input" id="print">Print</button>
+                    <button type="button" class="input" id="save_receipt">Save receipt</button>
+                    <button type="button" class="input" id="terminal_status">Terminal Status</button>
+                    <button type="button" class="input" id="ok">Ok</button>
+                    <button type="button" class="input" id="ok_retry">Ok Retry</button>
+                    <button type="button" class="input" id="ok_override_paid">Ok Override Paid</button>
+                    <button type="button" class="input" id="ok_cancel">Ok Transaction Unsuccessful</button>
+                </p>
+
+                <fieldset id="purchase_inputs" class="input">
+                    <h3>Purchase / Moto / Cashout / Refund</h3>
+                    <div id="amount_input">
+                        <label for="amount">Amount (cents): </label>
+                        <input type="number" id="amount" name="amount" value="10" placeholder="Amount (cents)">
+                    </div>
+                    <div id="tip_amount_input">
+                        <label for="tip_amount">Tip Amount (cents): </label>
+                        <input type="number" id="tip_amount" name="tip_amount" value="0" placeholder="Tip Amount (cents)">
+                    </div>
+                    <div id="cashout_amount_input">
+                        <label for="cashout_amount">Cash out amount (cents): </label>
+                        <input type="number" id="cashout_amount" name="cashout_amount" value="0" placeholder="Cash out Amount (cents)">
+                    </div>
+                    <div id="prompt_for_cash_input">
+                        <label for="prompt_for_cash">Prompt for Cash?: </label>
+                        <input type="checkbox" id="prompt_for_cash" name="prompt_for_cash" value="false">
+                    </div>
+                    <div id="surcharge_amount_input">
+                        <label for="surcharge_amount">Surcharge Amount (cents): </label>
+                        <input type="number" id="surcharge_amount" name="surcharge_amount" value="0" placeholder="Surcharge Amount (cents)">
+                    </div>
+
+                    <div>
+                        <button type="button" class="input" id="purchase">Purchase</button>
+                        <button type="button" class="input" id="moto">Moto</button>
+                        <button type="button" class="input" id="cashout">Cashout</button>
+                        <button type="button" class="input" id="refund">Refund</button>
+                        <button type="button" class="input" id="tx_sign_accept">Accept Signature</button>
+                        <button type="button" class="input" id="tx_sign_decline">Decline Signature</button>
+                    </div>
+                </fieldset>
+
+                <fieldset id="zip_purchase_input" class="input">
+                    <h3>Zip Purchase</h3>
+                    <div>
+                        <label for="zip_purchase_amount">Amount: </label>
+                        <input type="tel" id="zip_purchase_amount" name="zip_purchase_amount" placeholder="Amount" value="10">
+                    </div>
+                    <div>
+                        <label for="zip_purchase_store_code">Store Code: </label>
+                        <input type="tel" id="zip_purchase_store_code" name="zip_purchase_store_code" placeholder="Store Code" value="">
+                    </div>
+                    <div>
+                        <label for="zip_purchase_description">Description: </label>
+                        <input type="tel" id="zip_purchase_description" name="zip_purchase_description" placeholder="Description" value="Purchase">
+                    </div>
+                    <div>
+                        <button type="button" class="input" id="zip_purchase">Zip Purchase</button>
+                    </div>
+                </fieldset>
+
+                <fieldset id="zip_refund_input" class="input">
+                    <h3>Zip Refund</h3>
+                    <div>
+                        <label for="zip_refund_amount">Amount: </label>
+                        <input type="tel" id="zip_refund_amount" name="zip_refund_amount" placeholder="Amount" value="10">
+                    </div>
+                    <div>
+                        <label for="zip_refund_store_code">Original Receipt Number: </label>
+                        <input type="tel" id="zip_refund_store_code" name="zip_refund_store_code" placeholder="Original Receipt Number" value="">
+                    </div>
+                    <div>
+                        <button type="button" class="input" id="zip_refund">Zip Refund</button>
+                    </div>
+                </fieldset>
+
+                <fieldset id="suppress_merchant_password_input" class="input">
+                    <label for="suppress_merchant_password">Suppress Merchant Password?: </label>
+                    <input type="checkbox" id="suppress_merchant_password" name="suppress_merchant_password" value="1">
+                </fieldset>
+
+                <fieldset id="print_merchant_copy_input" class="input">
+                    <label for="print_merchant_copy">Print merchant copy?: </label>
+                    <input type="checkbox" id="print_merchant_copy" name="print_merchant_copy" value="false">
+                </fieldset>
+                <fieldset id="receipt_header_input" class="input">
+                    <label for="receipt_header">Receipt header: </label>
+                    <textarea id="receipt_header" name="receipt_header" value="" placeholder=""></textarea>
+                </fieldset>
+                <fieldset id="receipt_footer_input" class="input">
+                    <label for="receipt_footer">Receipt footer: </label>
+                    <textarea id="receipt_footer" name="receipt_footer" value="" placeholder=""></textarea>
+                </fieldset>
+
+                <fieldset id="pos_ref_id_input" class="input">
+                    <label for="pos_ref_id">Pos Ref ID: </label>
+                    <input type="text" id="pos_ref_id" name="pos_ref_id" placeholder="Pos Ref ID" value="">
+                </fieldset>
+                <fieldset id="auth_code_input" class="input">
+                    <label for="auth_code">Auth Code: </label>
+                    <input type="tel" id="auth_code" name="auth_code" placeholder="Submit Phone For Auth Code" value="">
+                </fieldset>
+            </div>
+        </td>
+    </tr>
+    </table>
+
+</body>
+</html>
