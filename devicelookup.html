@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Device Address Lookup</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" />
+
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" />
+
+    <script>
+        function lookup() {
+            var serialNumber = $("#serial-number-field").val();
+            var type = $("#type-field").val();
+            if (serialNumber && type) {
+                appendConsole("--------------------------------------------------");
+                lookupDevice(serialNumber, type);
+            }
+        }
+
+        function lookupDevice(serialNumber, type) {
+            $.ajax({
+                url: "https://device-address-api.wbc.mspenv.io/v1/" + serialNumber + "/" + type, 
+                type: "GET",
+                crossDomain: true,
+                contentType: "application/json",
+                headers: {
+                    "ASM-MSP-DEVICE-ADDRESS-API-KEY": "%YOUR_API_KEY%"
+                },
+                success: function (result) {
+                    appendConsole("device-address-api> " + serialNumber + ": " + type + "=" + result[type] + ", last_updated=" + result["last_updated"]);
+                    if (type == 'fqdn') {
+                        lookupDns(serialNumber, result['fqdn'])
+                    }
+                },
+                error: function (error) {
+                    alert("Error: " + error);
+                }
+            });
+        }
+
+        function lookupDns(serialNumber, fqdn) {
+            $.getJSON("https://dns.google/resolve?name=" + fqdn, function (result) {
+                console.log(result);
+                if ("Answer" in result) {
+                    result["Answer"].forEach(function (answer, index) {
+                        appendConsole("google-dns> " + fqdn + ": address=" + answer["data"]);
+                    })
+                } else {
+                    appendConsole("google-dns> " + fqdn + ": no address found");
+                }
+            });
+        }
+
+        function appendConsole(line) {
+            var cnsl = $("#console");
+            cnsl.val(line + "\n" + cnsl.val());
+        }
+        
+    </script>
+    <style>
+        #console {
+            height: 500px;
+            resize: none;
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container-main" class="container">
+        <h1>Device Address Lookup</h1>
+
+        <form onsubmit="lookup(); return false;" class="form-inline">
+            <div class="form-group">
+                <input type="text" id="serial-number-field" placeholder="123-456-789" class="form-control" />
+            </div>
+            <div class="form-group">
+                <select id="type-field" class="form-control">
+                    <option value="ip">IP</option>
+                    <option value="fqdn">FQDN</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button id="submit-button" type="submit" class="btn btn-primary">
+                    Submit
+                </button>
+            </div>
+        </form>
+
+        <br/>
+
+        <textarea id="console" class="form-control" readonly></textarea>
+
+    </div>
+
+</body>
+</html>
