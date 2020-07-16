@@ -200,3 +200,8 @@ fieldset input {
 #flow_status_heading {
     color: orangered;
 }
+
+.supportalignment{
+text-align: right;
+padding-right: 2rem;
+}
