@@ -6,7 +6,6 @@ import { Connection } from '../connection';
 
 function AutoAddressCheck() {
   const [serialNumber, setSerialNumber] = useState('');
-  const [apiKey, setApiKey] = useState('');
   const [fqdn, setFqdn] = useState('');
   const [ip, setIp] = useState('');
   const [timeStampFqdn, setTimeStampFqdn] = useState('');
@@ -31,7 +30,7 @@ function AutoAddressCheck() {
       `https://device-address-api${testMode ? '-sb' : ''}.wbc.mspenv.io/v1/${serialNumber}/fqdn`,
       {
         headers: {
-          'ASM-MSP-DEVICE-ADDRESS-API-KEY': apiKey,
+          'ASM-MSP-DEVICE-ADDRESS-API-KEY': 'DADDRTESTTOOL',
         },
       }
     );
@@ -59,7 +58,7 @@ function AutoAddressCheck() {
       `https://device-address-api${testMode ? '-sb' : ''}.wbc.mspenv.io/v1/${serialNumber}/ip`,
       {
         headers: {
-          'ASM-MSP-DEVICE-ADDRESS-API-KEY': apiKey,
+          'ASM-MSP-DEVICE-ADDRESS-API-KEY': 'DADDRTESTTOOL',
         },
       }
     );
@@ -106,17 +105,6 @@ function AutoAddressCheck() {
             setResult('');
           }}
         />
-        <Input
-          id="inpApiKey"
-          name="Api Key"
-          label="Api Key"
-          placeholder="Api Key"
-          required
-          onChange={(e: any) => {
-            setApiKey(e.target.value);
-            setResult('');
-          }}
-        />
         <Checkbox
           type="checkbox"
           id="ckbTestMode"
@@ -156,7 +144,7 @@ function AutoAddressCheck() {
                     <td>{timeStampFqdn}</td>
                   </tr>
                   <tr>
-                    <th>Last Updated ip</th>
+                    <th>Last Updated IP</th>
                     <td>{timeStampIp}</td>
                   </tr>
                 </tbody>
@@ -167,8 +155,12 @@ function AutoAddressCheck() {
               <Table>
                 <tbody>
                   <tr>
-                    <th>Google DNS</th>
-                    <td>{JSON.stringify(googleDns.Answer[0])}</td>
+                    <th>FQDN</th>
+                    <td>{JSON.stringify(googleDns.Answer[0].name)}</td>
+                  </tr>
+                  <tr>
+                    <th>IP</th>
+                    <td>{JSON.stringify(googleDns.Answer[0].data)}</td>
                   </tr>
                 </tbody>
               </Table>
