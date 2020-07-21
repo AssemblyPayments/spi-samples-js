@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Table, Alert } from 'react-bootstrap';
+import { Table, Alert, Row, Col } from 'react-bootstrap';
 import { Input } from '../../../components/Input';
 import Checkbox from '../../../components/Checkbox';
+import { Connection } from '../connection';
 
 function AutoAddressCheck() {
   const [serialNumber, setSerialNumber] = useState('');
@@ -16,6 +17,9 @@ function AutoAddressCheck() {
     request_id: '',
     error_code: 111,
     error: '',
+  });
+  const [googleDns, setGoogleDns] = useState({
+    Answer: [{ name: '321-490-753.z1.sandbox.apdvcs.net.', data: '192.168.1.102' }],
   });
 
   function fetchResponse() {
@@ -36,10 +40,18 @@ function AutoAddressCheck() {
       setFqdn(data.fqdn);
       setTimeStampFqdn(data.last_updated);
       setResult('success');
+      webSocketFqdn(data.fqdn);
     } else {
       const data = await response.json();
       setErrorResponse(data);
       setResult('error');
+    }
+    if (result === 'success') {
+      const response1 = await fetch(`https://dns.google/resolve?name=${fqdn}`);
+      if (response1.ok) {
+        const data = await response1.json();
+        setGoogleDns(data);
+      }
     }
   }
   async function fetchIp() {
@@ -63,6 +75,22 @@ function AutoAddressCheck() {
       setResult('error');
     }
   }
+  function webSocketFqdn(webFqdn: any) {
+    const connection = new Connection('wss://321-490-753.z1.sandbox.apdvcs.net');
+    connection.Connect();
+
+    // const socket = new WebSocket('wss://321-490-753.z1.sandbox.apdvcs.net');
+    // console.log('init ws socket ', webFqdn);
+    // socket.onopen = function (e: any) {
+    //   console.log('[open] Connection established');
+    //   console.log('Sending to server');
+    //   socket.send('success');
+    // };
+    // socket.onerror = function (error: any) {
+    //   console.log(`[error] ${error.message}`);
+    // };
+  }
+
   return (
     <div className="w-100 p-3">
       <h2 className="sub-header">L2 Support and/or Merchants to test auto address</h2>
@@ -73,7 +101,6 @@ function AutoAddressCheck() {
           label="Serial Number"
           placeholder="Serial Number"
           required
-          // defaultValue={}
           onChange={(e: any) => {
             setSerialNumber(e.target.value);
             setResult('');
@@ -85,7 +112,6 @@ function AutoAddressCheck() {
           label="Api Key"
           placeholder="Api Key"
           required
-          // defaultValue={}
           onChange={(e: any) => {
             setApiKey(e.target.value);
             setResult('');
@@ -108,32 +134,46 @@ function AutoAddressCheck() {
       {result === 'success' && (
         <div>
           <h2 className="sub-header">Result</h2>
-          <div className="w-50 m-auto">
-            <Table>
-              <tbody>
-                <tr>
-                  <th>Environment</th>
-                  <td>{testMode ? 'Sandbox' : 'Production'}</td>
-                </tr>
-                <tr>
-                  <th>IP</th>
-                  <td>{ip}</td>
-                </tr>
-                <tr>
-                  <th>FQDN</th>
-                  <td>{fqdn}</td>
-                </tr>
-                <tr>
-                  <th>Last Updated Fqdn</th>
-                  <td>{timeStampFqdn}</td>
-                </tr>
-                <tr>
-                  <th>Last Updated ip</th>
-                  <td>{timeStampIp}</td>
-                </tr>
-              </tbody>
-            </Table>
-          </div>
+          <Row>
+            <Col sm={6}>
+              <h5 className="text-center">Device Address Api</h5>
+              <Table>
+                <tbody>
+                  <tr>
+                    <th>Environment</th>
+                    <td>{testMode ? 'Sandbox' : 'Production'}</td>
+                  </tr>
+                  <tr>
+                    <th>IP</th>
+                    <td>{ip}</td>
+                  </tr>
+                  <tr>
+                    <th>FQDN</th>
+                    <td>{fqdn}</td>
+                  </tr>
+                  <tr>
+                    <th>Last Updated Fqdn</th>
+                    <td>{timeStampFqdn}</td>
+                  </tr>
+                  <tr>
+                    <th>Last Updated ip</th>
+                    <td>{timeStampIp}</td>
+                  </tr>
+                </tbody>
+              </Table>
+            </Col>
+            <Col sm={6}>
+              <h5 className="text-center">Google Api</h5>
+              <Table>
+                <tbody>
+                  <tr>
+                    <th>Google DNS</th>
+                    <td>{JSON.stringify(googleDns.Answer[0])}</td>
+                  </tr>
+                </tbody>
+              </Table>
+            </Col>
+          </Row>
         </div>
       )}
       {result === 'error' && (
