@@ -9,7 +9,7 @@ function SupportTools() {
     <div>
       <Tab.Container id="pos-tabs" defaultActiveKey="sample" unmountOnExit>
         <Row className="window-fix">
-          <Col sm={3} className="menu-sidebar min-vh-100">
+          <Col sm={2} className="menu-sidebar min-vh-100">
             <div className="sticky-top">
               <h1 className="logo">
                 <Logo width="100" height="50" title="mx51 Logo" />
@@ -21,7 +21,7 @@ function SupportTools() {
               </Nav>
             </div>
           </Col>
-          <Col sm={9}>
+          <Col sm={10}>
             <Tab.Content>
               <Tab.Pane eventKey="sample">
                 <AutoAddressCheck />

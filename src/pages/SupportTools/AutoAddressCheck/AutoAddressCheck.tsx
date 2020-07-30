@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Table, Alert, Row, Col } from 'react-bootstrap';
+import SpiService from '../../Burger/spiService';
+
 import { Input } from '../../../components/Input';
 import Checkbox from '../../../components/Checkbox';
-import { Connection } from '../connection';
+// import { Connection } from '../connection';
 
 function AutoAddressCheck() {
   const [serialNumber, setSerialNumber] = useState('');
@@ -75,19 +77,16 @@ function AutoAddressCheck() {
     }
   }
   function webSocketFqdn(webFqdn: any) {
-    const connection = new Connection('wss://321-490-753.z1.sandbox.apdvcs.net');
-    connection.Connect();
+    // const connection = new Connection('wss://321-490-753.z1.sandbox.apdvcs.net');
+    // connection.Connect();
 
-    // const socket = new WebSocket('wss://321-490-753.z1.sandbox.apdvcs.net');
-    // console.log('init ws socket ', webFqdn);
-    // socket.onopen = function (e: any) {
-    //   console.log('[open] Connection established');
-    //   console.log('Sending to server');
-    //   socket.send('success');
-    // };
-    // socket.onerror = function (error: any) {
-    //   console.log(`[error] ${error.message}`);
-    // };
+    const socket = new WebSocket(`wss://${webFqdn}`, new SpiService()._version);
+    socket.onopen = (e: any) => {
+      socket.send('success');
+    };
+    socket.onerror = (error: any) => {
+      console.log(`[error] ${error.message}`);
+    };
   }
 
   return (
@@ -123,7 +122,7 @@ function AutoAddressCheck() {
         <div>
           <h2 className="sub-header">Result</h2>
           <Row>
-            <Col sm={6}>
+            <Col sm={4}>
               <h5 className="text-center">Device Address Api</h5>
               <Table>
                 <tbody>
@@ -133,11 +132,19 @@ function AutoAddressCheck() {
                   </tr>
                   <tr>
                     <th>IP</th>
-                    <td>{ip}</td>
+                    <td>
+                      <a href={`http://${ip}`} target="_blank" rel="noopener noreferrer">
+                        {ip}
+                      </a>
+                    </td>
                   </tr>
                   <tr>
                     <th>FQDN</th>
-                    <td>{fqdn}</td>
+                    <td>
+                      <a href={`https://${fqdn}`} target="_blank" rel="noopener noreferrer">
+                        {fqdn}
+                      </a>
+                    </td>
                   </tr>
                   <tr>
                     <th>Last Updated Fqdn</th>
@@ -150,7 +157,7 @@ function AutoAddressCheck() {
                 </tbody>
               </Table>
             </Col>
-            <Col sm={6}>
+            <Col sm={4}>
               <h5 className="text-center">Google Api</h5>
               <Table>
                 <tbody>
@@ -161,6 +168,21 @@ function AutoAddressCheck() {
                   <tr>
                     <th>IP</th>
                     <td>{JSON.stringify(googleDns.Answer[0].data)}</td>
+                  </tr>
+                </tbody>
+              </Table>
+            </Col>
+            <Col sm={4}>
+              <h5 className="text-center">Web Socket Connection</h5>
+              <Table>
+                <tbody>
+                  <tr>
+                    <th>FQDN</th>
+                    <td>Connected</td>
+                  </tr>
+                  <tr>
+                    <th>IP</th>
+                    <td>Not connected</td>
                   </tr>
                 </tbody>
               </Table>
