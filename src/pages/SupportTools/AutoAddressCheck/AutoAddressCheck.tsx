@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
-import { Table, Alert, Row, Col } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Table, Alert, Row, Col, Container } from 'react-bootstrap';
 import SpiService from '../../Burger/spiService';
-
 import { Input } from '../../../components/Input';
 import Checkbox from '../../../components/Checkbox';
-// import { Connection } from '../connection';
 
 function AutoAddressCheck() {
   const [serialNumber, setSerialNumber] = useState('');
@@ -20,74 +18,99 @@ function AutoAddressCheck() {
     error: '',
   });
   const [googleDns, setGoogleDns] = useState({
-    Answer: [{ name: '321-490-753.z1.sandbox.apdvcs.net.', data: '192.168.1.102' }],
+    Answer: [{ name: '', data: '' }],
   });
+  const [webSocketConnectionFqdn, setWebSocketConnectionFqdn] = useState('');
+  // const [webSocketConnectionIp, setWebSocketConnectionIp] = useState('');
 
-  function fetchResponse() {
-    fetchFqdn();
-    fetchIp();
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const serialNumberFromUrl = params.get('sn');
+    const testModeFromUrl = params.get('qa');
+
+    const sn = serialNumberFromUrl === null ? '' : serialNumberFromUrl;
+    const tm = testModeFromUrl === 'true';
+    setSerialNumber(sn);
+    setTestMode(tm);
+
+    if (sn !== '') {
+      fetchResponse(sn, tm);
+    }
+  }, []);
+  function fetchResponse(sn: string, tm: boolean) {
+    fetchFqdn(sn, tm);
+    fetchIp(sn, tm);
   }
-  async function fetchFqdn() {
-    const response = await fetch(
-      `https://device-address-api${testMode ? '-sb' : ''}.wbc.mspenv.io/v1/${serialNumber}/fqdn`,
-      {
-        headers: {
-          'ASM-MSP-DEVICE-ADDRESS-API-KEY': 'DADDRTESTTOOL',
-        },
-      }
-    );
+  async function fetchFqdn(sn: string, tm: boolean) {
+    const response = await fetch(`https://device-address-api${tm ? '-sb' : ''}.wbc.mspenv.io/v1/${sn}/fqdn`, {
+      headers: {
+        'ASM-MSP-DEVICE-ADDRESS-API-KEY': 'DADDRTESTTOOL',
+      },
+    });
+    let fqdn2;
     if (response.ok) {
       const data = await response.json();
+      fqdn2 = data.fqdn;
       setFqdn(data.fqdn);
       setTimeStampFqdn(data.last_updated);
       setResult('success');
-      webSocketFqdn(data.fqdn);
+      webSocketFqdn(data.fqdn, sn, tm);
     } else {
       const data = await response.json();
       setErrorResponse(data);
       setResult('error');
     }
-    if (result === 'success') {
-      const response1 = await fetch(`https://dns.google/resolve?name=${fqdn}`);
+
+    if (response.ok) {
+      const response1 = await fetch(`https://dns.google/resolve?name=${fqdn2}`);
       if (response1.ok) {
         const data = await response1.json();
+        console.log(data);
         setGoogleDns(data);
       }
     }
   }
-  async function fetchIp() {
-    const response = await fetch(
-      `https://device-address-api${testMode ? '-sb' : ''}.wbc.mspenv.io/v1/${serialNumber}/ip`,
-      {
-        headers: {
-          'ASM-MSP-DEVICE-ADDRESS-API-KEY': 'DADDRTESTTOOL',
-        },
-      }
-    );
+  async function fetchIp(sn: string, tm: boolean) {
+    const response = await fetch(`https://device-address-api${tm ? '-sb' : ''}.wbc.mspenv.io/v1/${sn}/ip`, {
+      headers: {
+        'ASM-MSP-DEVICE-ADDRESS-API-KEY': 'DADDRTESTTOOL',
+      },
+    });
 
     if (response.ok) {
       const data = await response.json();
       setIp(data.ip);
       setTimeStampIp(data.last_updated);
       setResult('success');
+      // webSocketIp(data.ip);
     } else {
       const data = await response.json();
       setErrorResponse(data);
       setResult('error');
     }
   }
-  function webSocketFqdn(webFqdn: any) {
-    // const connection = new Connection('wss://321-490-753.z1.sandbox.apdvcs.net');
-    // connection.Connect();
+  function webSocketFqdn(webFqdn: any, sn: string, tm: boolean) {
+    const socket = new WebSocket(`wss://${webFqdn}`, `spi.${new SpiService()._version}`);
 
-    const socket = new WebSocket(`wss://${webFqdn}`, new SpiService()._version);
     socket.onopen = (e: any) => {
       socket.send('success');
+      setWebSocketConnectionFqdn('Successfully connected to webSocket');
     };
     socket.onerror = (error: any) => {
-      console.log(`[error] ${error.message}`);
+      setWebSocketConnectionFqdn('Error in connecting to webSocket');
     };
   }
+
+  // function webSocketIp(webIp: any) {
+  //   const socket = new WebSocket(`ws://${webIp}`, `spi.${new SpiService()._version}`);
+  //   socket.onopen = (e: any) => {
+  //     socket.send('success');
+  //     setWebSocketConnectionIp('Successfully connected to webSocket');
+  //   };
+  //   socket.onerror = (error: any) => {
+  //     setWebSocketConnectionIp('Error in connecting to webSocket');
+  //   };
+  // }
 
   return (
     <div className="w-100 p-3">
@@ -98,6 +121,7 @@ function AutoAddressCheck() {
           name="Serial Number"
           label="Serial Number"
           placeholder="Serial Number"
+          defaultValue={serialNumber}
           required
           onChange={(e: any) => {
             setSerialNumber(e.target.value);
@@ -114,85 +138,86 @@ function AutoAddressCheck() {
             setResult('');
           }}
         />
-        <button type="button" className="primary-button" onClick={() => fetchResponse()}>
+        <button type="button" className="primary-button" onClick={() => fetchResponse(serialNumber, testMode)}>
           Resolve
         </button>
       </div>
       {result === 'success' && (
         <div>
           <h2 className="sub-header">Result</h2>
-          <Row>
-            <Col sm={4}>
-              <h5 className="text-center">Device Address Api</h5>
-              <Table>
-                <tbody>
-                  <tr>
-                    <th>Environment</th>
-                    <td>{testMode ? 'Sandbox' : 'Production'}</td>
-                  </tr>
-                  <tr>
+          <Container>
+            <Row>
+              <Col xs={12}>
+                <h5 className="text-center">Device Address API</h5>
+                <Table>
+                  <tbody>
+                    <tr>
+                      <th>Environment</th>
+                      <td>{testMode ? 'Sandbox' : 'Production'}</td>
+                    </tr>
+                    <tr>
+                      <th>IP</th>
+                      <td>
+                        <a href={`http://${ip}`} target="_blank" rel="noopener noreferrer">
+                          {ip}
+                        </a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>FQDN</th>
+                      <td>
+                        <a href={`https://${fqdn}`} target="_blank" rel="noopener noreferrer">
+                          {fqdn}
+                        </a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>Last Updated Fqdn</th>
+                      <td>{timeStampFqdn}</td>
+                    </tr>
+                    <tr>
+                      <th>Last Updated IP</th>
+                      <td>{timeStampIp}</td>
+                    </tr>
+                  </tbody>
+                </Table>
+              </Col>
+              <Col xs={12}>
+                <h5 className="text-center">Google API</h5>
+                <Table>
+                  <tbody>
+                    <tr>
+                      <th>FQDN</th>
+                      <td>{googleDns.Answer[0].name}</td>
+                    </tr>
+                    <tr>
+                      <th>IP</th>
+                      <td>{googleDns.Answer[0].data}</td>
+                    </tr>
+                  </tbody>
+                </Table>
+              </Col>
+              <Col xs={12}>
+                <h5 className="text-center">Web Socket Connection</h5>
+                <Table>
+                  <tbody>
+                    <tr>
+                      <th>FQDN</th>
+                      <td>{webSocketConnectionFqdn}</td>
+                    </tr>
+                    {/* <tr>
                     <th>IP</th>
-                    <td>
-                      <a href={`http://${ip}`} target="_blank" rel="noopener noreferrer">
-                        {ip}
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>FQDN</th>
-                    <td>
-                      <a href={`https://${fqdn}`} target="_blank" rel="noopener noreferrer">
-                        {fqdn}
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Last Updated Fqdn</th>
-                    <td>{timeStampFqdn}</td>
-                  </tr>
-                  <tr>
-                    <th>Last Updated IP</th>
-                    <td>{timeStampIp}</td>
-                  </tr>
-                </tbody>
-              </Table>
-            </Col>
-            <Col sm={4}>
-              <h5 className="text-center">Google Api</h5>
-              <Table>
-                <tbody>
-                  <tr>
-                    <th>FQDN</th>
-                    <td>{JSON.stringify(googleDns.Answer[0].name)}</td>
-                  </tr>
-                  <tr>
-                    <th>IP</th>
-                    <td>{JSON.stringify(googleDns.Answer[0].data)}</td>
-                  </tr>
-                </tbody>
-              </Table>
-            </Col>
-            <Col sm={4}>
-              <h5 className="text-center">Web Socket Connection</h5>
-              <Table>
-                <tbody>
-                  <tr>
-                    <th>FQDN</th>
-                    <td>Connected</td>
-                  </tr>
-                  <tr>
-                    <th>IP</th>
-                    <td>Not connected</td>
-                  </tr>
-                </tbody>
-              </Table>
-            </Col>
-          </Row>
+                    <td>{webSocketConnectionIp}</td>
+                  </tr> */}
+                  </tbody>
+                </Table>
+              </Col>
+            </Row>
+          </Container>
         </div>
       )}
       {result === 'error' && (
         <div>
-          {/* <h2 className="sub-header">Error</h2> */}
           <Alert id="alertMessage" variant="danger" className="text-center">
             Error
           </Alert>
