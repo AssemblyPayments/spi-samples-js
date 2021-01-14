@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { SuccessState, PurchaseResponse, Logger, TransactionType, TransactionUpdate } from '@mx51/spi-client-js';
+import { SuccessState, Logger, TransactionType, TransactionUpdate } from '@mx51/spi-client-js';
 import { Col, Row, Modal, Button } from 'react-bootstrap';
+import { useSelector } from 'react-redux';
 import './Checkout.scss';
 import Tick from '../Tick';
 import OrderPay from '../OrderPay';
@@ -15,6 +16,7 @@ import {
   refund as refundService,
   cashout as cashoutService,
 } from '../../services';
+import { selectPairedTerminals } from '../../features/terminals/terminalSelectors';
 
 const isTransactionInquiry = (transactionType: String) =>
   [TransactionType.GetTransaction, TransactionType.GetLastTransaction].includes(transactionType);
@@ -34,7 +36,6 @@ function handleTransactionMessageUpdateCallback(m: Message, flowLogger: Logger) 
 }
 
 function handlePurchaseStatusCallback(
-  setStateChange: Function,
   event: TxFlowStateChangedEvent,
   flowEl: React.RefObject<HTMLDivElement>,
   receiptEl: React.RefObject<HTMLPreElement>,
@@ -43,8 +44,6 @@ function handlePurchaseStatusCallback(
   spi: Spi,
   transactionAction: String
 ) {
-  setStateChange({ ...event.detail });
-
   const flowMsg = new Logger(flowEl.current);
   const receipt = new Logger(receiptEl.current);
 
@@ -77,18 +76,6 @@ function handlePurchaseStatusCallback(
   } else {
     transactionFlowService.handleTransaction(flowMsg, event.detail);
   }
-}
-
-function displayReceipt(txState: TransactionFlowState) {
-  const { Response, SignatureRequiredMessage, Type } = txState;
-
-  if (Response && Type !== TransactionType.GetLastTransaction) {
-    return new PurchaseResponse(Response).GetCustomerReceipt().trim();
-  }
-  if (!Response && SignatureRequiredMessage && SignatureRequiredMessage.GetMerchantReceipt) {
-    return SignatureRequiredMessage.GetMerchantReceipt().trim();
-  }
-  return undefined;
 }
 
 function motoPay(
@@ -222,21 +209,19 @@ function cashoutPay(
 }
 
 function backAction(
-  stateChange: StateChange,
+  isFinished: boolean,
   onNoThanks: Function,
   setSurchargeAmount: Function,
-  setStateChange: Function,
   setTransactionStatus: Function,
   flowEl: React.RefObject<HTMLDivElement>,
   receiptEl: React.RefObject<HTMLPreElement>,
   onClose: Function,
   clearProducts: boolean
 ) {
-  if (stateChange.Finished && clearProducts) {
+  if (isFinished && clearProducts) {
     onNoThanks();
     setSurchargeAmount(0);
   }
-  setStateChange({ Finished: true, Success: SuccessState.Unknown });
   setTransactionStatus(false);
   if (flowEl.current !== null) {
     const flowMsg = new Logger(flowEl.current);
@@ -265,11 +250,11 @@ function Checkout(props: {
   showUnknownModal: boolean;
   setShowUnknownModal: Function;
   handleOverrideTransaction: Function;
-  suppressMerchantPassword: boolean;
   openPricing: boolean;
   setOpenPricing: Function;
   status: string;
   onErrorMsg: Function;
+  currentTerminalId: string;
 }) {
   const {
     onClose,
@@ -286,14 +271,20 @@ function Checkout(props: {
     showUnknownModal,
     setShowUnknownModal,
     handleOverrideTransaction,
-    suppressMerchantPassword,
     openPricing,
     setOpenPricing,
     status,
     onErrorMsg,
+    currentTerminalId,
   } = props;
+
+  const terminals = useSelector(selectPairedTerminals) as any;
+  const terminal = terminals.filter((t: any) => t.id === currentTerminalId)[0];
+  const suppressMerchantPassword = terminal?.setting?.suppressMerchantPassword;
+
+  const awaitingSigCheck = terminal && terminal.txFlow ? terminal.txFlow.AwaitingSignatureCheck : false;
   const [promptCashout, setPromptCashout] = useState(false);
-  const [showSigApproval, setShowSigApproval] = useState(false);
+  const [showSigApproval, setShowSigApproval] = useState(awaitingSigCheck);
   const [finalTotal, setFinalTotal] = useState(0);
   const [finalSurcharge, setFinalSurcharge] = useState(0);
   const [finalCashout, setFinalCashout] = useState(0);
@@ -303,23 +294,25 @@ function Checkout(props: {
   const flowEl = useRef<HTMLDivElement>(null);
   const receiptEl = useRef<HTMLPreElement>(null);
 
-  const [stateChange, setStateChange] = useState({
-    Finished: false,
-    Success: SuccessState.Unknown,
-  } as StateChange);
+  const txFlowFinished = terminal && terminal.txFlow ? terminal.txFlow.Finished : false;
+  const txFlowSuccess = terminal && terminal.txFlow ? terminal.txFlow.Success : SuccessState.Unknown;
+  const txFlowResponse = terminal && terminal.txFlow ? terminal.txFlow.Response : null;
+  const txUpdateMessage = terminal && terminal.txFlow ? terminal.txMessage : null;
 
-  const handlePurchaseStatusChange = useCallback((event: TxFlowStateChangedEvent) => {
-    handlePurchaseStatusCallback(
-      setStateChange,
-      event,
-      flowEl,
-      receiptEl,
-      setShowSigApproval,
-      setShowUnknownModal,
-      spi,
-      transactionAction
-    );
-  }, []);
+  const handlePurchaseStatusChange = useCallback(
+    (event: TxFlowStateChangedEvent) => {
+      handlePurchaseStatusCallback(
+        event,
+        flowEl,
+        receiptEl,
+        setShowSigApproval,
+        setShowUnknownModal,
+        spi,
+        transactionAction
+      );
+    },
+    [setShowUnknownModal, spi, transactionAction]
+  );
 
   const handleTransactionUpdate = useCallback((event) => {
     const flowMsg = new Logger(flowTransactionEl.current);
@@ -362,31 +355,11 @@ function Checkout(props: {
   const amount = totalBillAmount;
 
   function handleBackAndClearProduts() {
-    backAction(
-      stateChange,
-      onNoThanks,
-      setSurchargeAmount,
-      setStateChange,
-      setTransactionStatus,
-      flowEl,
-      receiptEl,
-      onClose,
-      false
-    );
+    backAction(txFlowFinished, onNoThanks, setSurchargeAmount, setTransactionStatus, flowEl, receiptEl, onClose, false);
   }
 
   function handleBack() {
-    backAction(
-      stateChange,
-      onNoThanks,
-      setSurchargeAmount,
-      setStateChange,
-      setTransactionStatus,
-      flowEl,
-      receiptEl,
-      onClose,
-      true
-    );
+    backAction(txFlowFinished, onNoThanks, setSurchargeAmount, setTransactionStatus, flowEl, receiptEl, onClose, true);
   }
   function handleRetry() {
     setTransactionStatus(false);
@@ -416,7 +389,7 @@ function Checkout(props: {
       );
     }
 
-    if (transactionAction === '' && list.length === 0) {
+    if (transactionAction === TransactionType.CashoutOnly && list.length === 0) {
       return (
         <CashOutPay
           handleCashoutPay={(cashoutAmount: number) =>
@@ -487,7 +460,7 @@ function Checkout(props: {
   function transactionSuccessful() {
     return (
       <div>
-        {!stateChange.Finished && (
+        {!txFlowFinished && (
           <div className="transaction-successful">
             <h6>Purchase: ${purchaseAmount}</h6>
             <h6>Tip amount: ${finalTipAmount}</h6>
@@ -498,6 +471,7 @@ function Checkout(props: {
             ) : (
               <p>Total amount: ${finalTotal}</p>
             )}
+            {txUpdateMessage && <div>{txUpdateMessage.display_message_text}</div>}
             <div ref={flowTransactionEl} />
             <button
               type="button"
@@ -510,14 +484,12 @@ function Checkout(props: {
             </button>
           </div>
         )}
-        {stateChange.Finished && SuccessState.Failed === stateChange.Success && (
+        {txFlowFinished && SuccessState.Failed === txFlowSuccess && (
           <div className="transaction-successful">
             <p>
-              {stateChange.Response &&
-              stateChange.Response.GetErrorDetail &&
-              transactionAction === TransactionType.Refund
-                ? stateChange.Response.GetErrorDetail()
-                : new PurchaseResponse(stateChange.Response).GetResponseText()}
+              {txFlowResponse && txFlowResponse.GetErrorDetail && transactionAction === TransactionType.Refund
+                ? txFlowResponse.GetErrorDetail()
+                : txFlowResponse?.Data?.host_response_text}
             </p>
             <button
               type="button"
@@ -535,7 +507,7 @@ function Checkout(props: {
             </button>
           </div>
         )}
-        {stateChange.Finished && SuccessState.Success === stateChange.Success && (
+        {txFlowFinished && SuccessState.Success === txFlowSuccess && (
           <div className="transaction-successful">
             <Tick className="color-purple" />
             <div className="transaction-successful-button">
@@ -626,7 +598,8 @@ function Checkout(props: {
                 {transactionAction !== TransactionType.GetLastTransaction ? 'Receipt' : 'Last Transaction'}
               </h2>
               <pre className="receipt-alignment" ref={receiptEl}>
-                {displayReceipt(stateChange)}
+                {/* {displayReceipt(stateChange)} */}
+                {txFlowResponse?.Data?.customer_receipt}
               </pre>
             </Col>
           </Row>

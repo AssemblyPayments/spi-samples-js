@@ -1,26 +1,22 @@
+import { Button } from 'react-bootstrap';
 import React, { useState } from 'react';
 import Checkbox from '../Checkbox';
 import { Textarea } from '../Input';
 
-function SettingConfig(props: {
-  suppressMerchantPassword: boolean;
-  setSuppressMerchantPassword: Function;
-  handleSaveSetting: Function;
-}) {
-  const { suppressMerchantPassword, setSuppressMerchantPassword, handleSaveSetting } = props;
-  const [sigFlow, setSigFlow] = useState(window.localStorage.getItem('sig_flow_from_eftpos') === 'true');
-  const [eftposReceipt, setEftposReceipt] = useState(window.localStorage.getItem('rcpt_from_eftpos') === 'true');
-  const [printMerchantCopy, setPrintMerchantCopy] = useState(
-    window.localStorage.getItem('print_merchant_copy_input') === 'true'
-  );
-  const [receiptHeader, setReceiptHeader] = useState(window.localStorage.getItem('receipt_header_input') || '');
-  const [receiptFooter, setReceiptFooter] = useState(window.localStorage.getItem('receipt_footer_input') || '');
+function SettingConfig(props: { handleSaveSetting: Function; terminal: any }) {
+  const { handleSaveSetting, terminal } = props;
+  const [sigFlow, setSigFlow] = useState(terminal?.setting?.sigFlow);
+  const [eftposReceipt, setEftposReceipt] = useState(terminal?.setting?.eftposReceipt);
+  const [printMerchantCopy, setPrintMerchantCopy] = useState(terminal?.setting?.printMerchantCopy);
+  const [receiptHeader, setReceiptHeader] = useState(terminal?.setting?.receiptHeader || '');
+  const [receiptFooter, setReceiptFooter] = useState(terminal?.setting?.receiptFooter || '');
+  const [suppressMerchantPassword, setSuppressMerchantPassword] = useState(terminal?.setting?.suppressMerchantPassword);
+
   return (
     <div>
       <h2 className="sub-header">Setting</h2>
       <div className="mr-3 ml-3">
         <Checkbox
-          type="checkbox"
           id="check-receipt-eftpos"
           label="Receipt from EFTPOS"
           checked={eftposReceipt}
@@ -29,7 +25,6 @@ function SettingConfig(props: {
           }}
         />
         <Checkbox
-          type="checkbox"
           id="check-sig-eftpos"
           label="Sig from EFTPOS"
           checked={sigFlow}
@@ -38,7 +33,6 @@ function SettingConfig(props: {
           }}
         />
         <Checkbox
-          type="checkbox"
           id="print-merchant-copy"
           label="Print Merchant Copy"
           checked={printMerchantCopy}
@@ -47,7 +41,6 @@ function SettingConfig(props: {
           }}
         />
         <Checkbox
-          type="checkbox"
           id="suppress-merchant-password"
           label="Suppress Merchant Password"
           checked={suppressMerchantPassword}
@@ -73,16 +66,25 @@ function SettingConfig(props: {
             setReceiptFooter(e.target.value);
           }}
         />
-        <button
+        <Button
+          block
+          variant="primary"
           type="button"
-          className="btn btn-primary rounded-0 btn-block btn-lg mb-2"
           id="btnApply"
           onClick={() => {
-            handleSaveSetting(eftposReceipt, sigFlow, printMerchantCopy, receiptHeader, receiptFooter);
+            handleSaveSetting(
+              eftposReceipt,
+              sigFlow,
+              printMerchantCopy,
+              receiptHeader,
+              receiptFooter,
+              suppressMerchantPassword
+            );
           }}
         >
           Save &amp; Apply
-        </button>
+        </Button>
+        <br />
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import Checkbox from '../Checkbox';
 
 function handleKeyPress(event: KeyboardEvent, setPromptCashout: Function) {
   if (event.key < '0' || event.key > '9') {
-    alert('invalid input');
+    // alert('invalid input');
     event.preventDefault();
     return false;
   }
@@ -42,7 +42,7 @@ function CreditCard(props: {
         <Input
           id="inpCashoutAmount"
           name="Cashout amount"
-          label="cashout Amount"
+          label="Cashout Amount"
           disabled={tipAmount > 0 || transactionStatus}
           min="0"
           onKeyPress={(e: KeyboardEvent) => handleKeyPress(e, setPromptCashout)}
@@ -51,7 +51,6 @@ function CreditCard(props: {
         />
         <p className="ml-2">Cents</p>
         <Checkbox
-          type="checkbox"
           id="prompt_cashout"
           disabled={tipAmount > 0 || transactionStatus}
           checked={promptCashout}
@@ -73,7 +72,6 @@ function CreditCard(props: {
         />
         <p className="ml-2">Cents</p>
         <Checkbox
-          type="checkbox"
           id="open-pricing"
           label="Override Order Total"
           disabled={transactionStatus}

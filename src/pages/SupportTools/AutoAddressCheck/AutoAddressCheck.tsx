@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Alert, Row, Col, Container } from 'react-bootstrap';
-import SpiService from '../../Burger/spiService';
 import { Input } from '../../../components/Input';
 import Checkbox from '../../../components/Checkbox';
 
@@ -39,7 +38,6 @@ async function fetchFqdn(
       const data = await dnsResponse.json();
       if (dnsResponse.ok && data.Answer) {
         setGoogleDns(data);
-        console.log(data);
       } else {
         setGoogleDns('Error in Google Api');
       }
@@ -155,7 +153,6 @@ function AutoAddressCheck() {
           }}
         />
         <Checkbox
-          type="checkbox"
           id="ckbTestMode"
           label="Test Mode"
           checked={testMode}

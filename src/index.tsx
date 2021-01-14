@@ -10,35 +10,39 @@ import Default from './pages/Default';
 import TablePos from './pages/Table';
 import SupportTools from './pages/SupportTools';
 import store from './redux/store';
+import watchTerminalEvents from './features/terminals/terminalEvents';
 
 import './index.scss';
 
-const Routes = () => (
-  <BrowserRouter>
-    <Switch>
-      <Route exact path="/">
-        <App />
-      </Route>
-      <Route path="/burger">
-        <Provider store={store}>
-          <BurgerPos />
-        </Provider>
-      </Route>
-      <Route path="/motel">
-        <MotelPos />
-      </Route>
-      <Route path="/ramen">
-        {/* <RamenPos /> */}
-        <Default />
-      </Route>
-      <Route path="/table">
-        <TablePos />
-      </Route>
-      <Route path="/support-tools">
-        <SupportTools />
-      </Route>
-    </Switch>
-  </BrowserRouter>
-);
+const Routes = () => {
+  store.dispatch(watchTerminalEvents());
+  return (
+    <BrowserRouter>
+      <Switch>
+        <Route exact path="/">
+          <App />
+        </Route>
+        <Route path="/burger">
+          <Provider store={store}>
+            <BurgerPos />
+          </Provider>
+        </Route>
+        <Route path="/motel">
+          <MotelPos />
+        </Route>
+        <Route path="/ramen">
+          {/* <RamenPos /> */}
+          <Default />
+        </Route>
+        <Route path="/table">
+          <TablePos />
+        </Route>
+        <Route path="/support-tools">
+          <SupportTools />
+        </Route>
+      </Switch>
+    </BrowserRouter>
+  );
+};
 
 ReactDOM.render(<Routes />, document.getElementById('root'));

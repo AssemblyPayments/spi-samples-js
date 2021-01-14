@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
-import { Col, Row, Modal, Button } from 'react-bootstrap';
-import { SpiStatus, TransactionType } from '@mx51/spi-client-js';
+import React, { useState, useEffect } from 'react';
+import { Col, Row, Modal, Button, Alert } from 'react-bootstrap';
+import { useSelector, useDispatch } from 'react-redux';
+import { TransactionType } from '@mx51/spi-client-js';
 import Checkout from '../Checkout';
 import Order from '../Order';
 import './Products.scss';
 import ProductList from '../ProductList';
 import allProducts from './ProductData';
 import { transactionFlow as transactionFlowService } from '../../services';
+import { selectIsPairedTerminalStatus, selectPairedTerminals } from '../../features/terminals/terminalSelectors';
+import SPI from '../../pages/Burger/spi';
+import TerminalSelector from '../features/Terminals/TerminalSelector';
+import { clearTransaction, updateActiveTerminal } from '../../features/terminals/terminalSlice';
 
 function productClick(
   shortlistedProducts: Array<Product>,
@@ -71,36 +76,44 @@ function changeProductQuantity(
   updateShortlistedProducts(products);
 }
 
-function getTransaction(status: string, onErrorMsg: Function, setCheckout: Function, setTransactionAction: Function) {
-  if (status !== SpiStatus.PairedConnected) {
+function getTransaction(isTerminalPaired: boolean, onErrorMsg: Function, setTransactionAction: Function) {
+  if (!isTerminalPaired) {
     onErrorMsg('Please pair your POS to the terminal or check your network connection');
   } else {
-    setCheckout(true);
     setTransactionAction(TransactionType.GetTransaction);
   }
 }
 
-function lastTransaction(status: string, onErrorMsg: Function, setCheckout: Function, setTransactionAction: Function) {
-  if (status !== SpiStatus.PairedConnected) {
+function lastTransaction(isTerminalPaired: boolean, onErrorMsg: Function, setTransactionAction: Function) {
+  if (!isTerminalPaired) {
     onErrorMsg('Please pair your POS to the terminal or check your network connection');
   } else {
-    setCheckout(true);
     setTransactionAction(TransactionType.GetLastTransaction);
   }
 }
 
-function checkoutAction(shortlistedProducts: Array<Product>, setTransactionAction: Function, setCheckout: Function) {
-  if (shortlistedProducts.length === 0) {
-    setTransactionAction('');
+function checkoutAction(
+  isTerminalPaired: boolean,
+  shortlistedProducts: Array<Product>,
+  setTransactionAction: Function,
+  setCheckout: Function,
+  onErrorMsg: Function
+) {
+  if (!isTerminalPaired) {
+    onErrorMsg('Please pair your POS to the terminal or check your network connection');
+  } else if (shortlistedProducts.length === 0) {
+    setTransactionAction(TransactionType.CashoutOnly);
   } else {
     setTransactionAction(TransactionType.Purchase);
   }
-  setCheckout(true);
 }
 
-function refundAction(setCheckout: Function, setTransactionAction: Function) {
-  setCheckout(true);
-  setTransactionAction(TransactionType.Refund);
+function refundAction(isTerminalPaired: boolean, setTransactionAction: Function, onErrorMsg: Function) {
+  if (!isTerminalPaired) {
+    onErrorMsg('Please pair your POS to the terminal or check your network connection');
+  } else {
+    setTransactionAction(TransactionType.Refund);
+  }
 }
 
 function noThanksAction(
@@ -108,31 +121,37 @@ function noThanksAction(
   setTransactionAction: Function,
   spi: Spi,
   updateShortlistedProducts: Function,
-  setTransactionStatus: Function
+  setTransactionStatus: Function,
+  cleanTransactionAction: Function
 ) {
+  console.log('noThanksAction called');
   transactionFlowService.acknowledgeCompletion({ Info: () => {}, Clear: () => {} }, spi, () => {});
   setCheckout(false);
   setTransactionAction('');
   updateShortlistedProducts([]);
   setTransactionStatus(false);
+  cleanTransactionAction();
 }
 
-function checkoutClosed(setCheckout: Function, setTransactionAction: Function) {
+function checkoutClosed(setCheckout: Function, setTransactionAction: Function, cleanTransactionAction: Function) {
+  console.log('checkoutClosed called');
+
   setCheckout(false);
   setTransactionAction('');
+  cleanTransactionAction();
 }
 
 function overrideTransaction(spi: Spi, setShowUnknownModal: Function) {
+  console.log('overrideTransaction called');
+
   spi.AckFlowEndedAndBackToIdle();
   setShowUnknownModal(false);
 }
 
 type Props = {
-  spi: Spi;
   status: string;
   showUnknownModal: boolean;
   setShowUnknownModal: Function;
-  suppressMerchantPassword: boolean;
   errorMsg: string;
   onErrorMsg: Function;
   openPricing: boolean;
@@ -140,11 +159,9 @@ type Props = {
 };
 
 function Products({
-  spi,
   status,
   showUnknownModal,
   setShowUnknownModal,
-  suppressMerchantPassword,
   errorMsg,
   onErrorMsg,
   openPricing,
@@ -157,9 +174,33 @@ function Products({
   const [surchargeAmount, setSurchargeAmount] = useState(0);
   const [transactionStatus, setTransactionStatus] = useState<boolean>(false);
 
+  const isTerminalPaired = useSelector(selectIsPairedTerminalStatus);
+
+  const [currentTerminalId, setCurrentTerminalId] = useState('');
+
+  // const { spi } = terminal && terminal.id ? SPI.getInstance(terminal.id) : { spi: {} };
+  const { spi } = currentTerminalId !== '' ? SPI.getInstance(currentTerminalId) : { spi: {} };
+
+  const dispatch = useDispatch();
+  const cleanTransactionAction = () => dispatch(clearTransaction({ id: currentTerminalId }));
+  const clearActiveTerminal = () => dispatch(updateActiveTerminal({}));
+  useEffect(() => {
+    clearActiveTerminal();
+  });
+
   return (
     <>
       <Row>
+        <TerminalSelector
+          show={!checkout && transactionAction !== ''}
+          onSelect={(id) => {
+            setCurrentTerminalId(id);
+            setCheckout(true);
+          }}
+          onClose={() => {
+            setTransactionAction('');
+          }}
+        />
         <Modal show={showUnknownModal} onHide={() => setShowUnknownModal(false)}>
           <Modal.Header closeButton>
             <Modal.Title>Alert</Modal.Title>
@@ -183,8 +224,10 @@ function Products({
           </Modal.Body>
         </Modal>
         <Col lg={8}>
-          {status !== SpiStatus.PairedConnected && (
-            <div className="pairing_banner">Please check your device Pairing setting!!</div>
+          {!isTerminalPaired && (
+            <Alert variant="danger" className="mt-3 text-center">
+              <strong>Please check your device Pairing setting.</strong>
+            </Alert>
           )}
 
           {allProducts.map((cat) => (
@@ -203,15 +246,16 @@ function Products({
             onChangeProductQuantity={(id: string, quantity: number) =>
               changeProductQuantity(shortlistedProducts, updateShortlistedProducts, id, quantity)
             }
-            onGetTransaction={() => getTransaction(status, onErrorMsg, setCheckout, setTransactionAction)}
-            onRefund={() => refundAction(setCheckout, setTransactionAction)}
-            onLastTransaction={() => lastTransaction(status, onErrorMsg, setCheckout, setTransactionAction)}
-            onCheckout={() => checkoutAction(shortlistedProducts, setTransactionAction, setCheckout)}
+            onGetTransaction={() => getTransaction(isTerminalPaired, onErrorMsg, setTransactionAction)}
+            onRefund={() => refundAction(isTerminalPaired, setTransactionAction, onErrorMsg)}
+            onLastTransaction={() => lastTransaction(isTerminalPaired, onErrorMsg, setTransactionAction)}
+            onCheckout={() =>
+              checkoutAction(isTerminalPaired, shortlistedProducts, setTransactionAction, setCheckout, onErrorMsg)
+            }
             handleApplySurcharge={setSurchargeAmount}
             posRefId={posRefId}
             setPosRefId={setPosRefId}
             surchargeAmount={surchargeAmount}
-            status={status}
             errorMsg={errorMsg}
             onErrorMsg={onErrorMsg}
           />
@@ -219,9 +263,16 @@ function Products({
             <Checkout
               visible={checkout}
               list={shortlistedProducts}
-              onClose={() => checkoutClosed(setCheckout, setTransactionAction)}
+              onClose={() => checkoutClosed(setCheckout, setTransactionAction, cleanTransactionAction)}
               onNoThanks={() =>
-                noThanksAction(setCheckout, setTransactionAction, spi, updateShortlistedProducts, setTransactionStatus)
+                noThanksAction(
+                  setCheckout,
+                  setTransactionAction,
+                  spi,
+                  updateShortlistedProducts,
+                  setTransactionStatus,
+                  cleanTransactionAction
+                )
               }
               posRefId={posRefId}
               spi={spi}
@@ -233,11 +284,11 @@ function Products({
               showUnknownModal={showUnknownModal}
               setShowUnknownModal={setShowUnknownModal}
               handleOverrideTransaction={() => overrideTransaction(spi, setShowUnknownModal)}
-              suppressMerchantPassword={suppressMerchantPassword}
               openPricing={openPricing}
               setOpenPricing={setOpenPricing}
               onErrorMsg={onErrorMsg}
               status={status}
+              currentTerminalId={currentTerminalId}
             />
           )}
         </Col>

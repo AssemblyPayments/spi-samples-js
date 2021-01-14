@@ -1,5 +1,8 @@
 import { mount } from 'enzyme';
 import React from 'react';
+import { Provider } from 'react-redux';
+import store from '../../redux/store';
+
 import Order from './Order';
 
 describe('Order', () => {
@@ -23,21 +26,23 @@ describe('Order', () => {
     const surchargeAmount = 100;
     const onErrorMsg = jest.fn();
     component = mount(
-      <Order
-        list={list}
-        onChangeProductQuantity={onChangeProductQuantity}
-        onRefund={onRefund}
-        onGetTransaction={onGetTransaction}
-        onLastTransaction={onLastTransaction}
-        onCheckout={onCheckout}
-        handleApplySurcharge={handleApplySurcharge}
-        posRefId={posRefId}
-        setPosRefId={setPosRefId}
-        surchargeAmount={surchargeAmount}
-        status="Unpaired"
-        errorMsg=""
-        onErrorMsg={onErrorMsg}
-      />
+      <Provider store={store}>
+        <Order
+          list={list}
+          onChangeProductQuantity={onChangeProductQuantity}
+          onRefund={onRefund}
+          onGetTransaction={onGetTransaction}
+          onLastTransaction={onLastTransaction}
+          onCheckout={onCheckout}
+          handleApplySurcharge={handleApplySurcharge}
+          posRefId={posRefId}
+          setPosRefId={setPosRefId}
+          surchargeAmount={surchargeAmount}
+          status="Unpaired"
+          errorMsg=""
+          onErrorMsg={onErrorMsg}
+        />
+      </Provider>
     );
   });
 
@@ -99,21 +104,23 @@ describe('Order', () => {
     const surchargeAmount = 100;
     const onErrorMsg = jest.fn();
     component = mount(
-      <Order
-        list={list}
-        onChangeProductQuantity={onChangeProductQuantity}
-        onRefund={onRefund}
-        onGetTransaction={onGetTransaction}
-        onLastTransaction={onLastTransaction}
-        onCheckout={onCheckout}
-        handleApplySurcharge={handleApplySurcharge}
-        posRefId={posRefId}
-        setPosRefId={setPosRefId}
-        surchargeAmount={surchargeAmount}
-        status="Unpaired"
-        errorMsg=""
-        onErrorMsg={onErrorMsg}
-      />
+      <Provider store={store}>
+        <Order
+          list={list}
+          onChangeProductQuantity={onChangeProductQuantity}
+          onRefund={onRefund}
+          onGetTransaction={onGetTransaction}
+          onLastTransaction={onLastTransaction}
+          onCheckout={onCheckout}
+          handleApplySurcharge={handleApplySurcharge}
+          posRefId={posRefId}
+          setPosRefId={setPosRefId}
+          surchargeAmount={surchargeAmount}
+          status="Unpaired"
+          errorMsg=""
+          onErrorMsg={onErrorMsg}
+        />
+      </Provider>
     );
 
     component.find('button#btnItemDec101').simulate('click');
@@ -133,21 +140,24 @@ describe('Order', () => {
     const surchargeAmount = 100;
     const onErrorMsg = jest.fn();
     component = mount(
-      <Order
-        list={list}
-        onChangeProductQuantity={onChangeProductQuantity}
-        onRefund={onRefund}
-        onGetTransaction={onGetTransaction}
-        onLastTransaction={onLastTransaction}
-        onCheckout={onCheckout}
-        handleApplySurcharge={handleApplySurcharge}
-        posRefId={posRefId}
-        setPosRefId={setPosRefId}
-        surchargeAmount={surchargeAmount}
-        status="Unpaired"
-        errorMsg=""
-        onErrorMsg={onErrorMsg}
-      />
+      <Provider store={store}>
+        {' '}
+        <Order
+          list={list}
+          onChangeProductQuantity={onChangeProductQuantity}
+          onRefund={onRefund}
+          onGetTransaction={onGetTransaction}
+          onLastTransaction={onLastTransaction}
+          onCheckout={onCheckout}
+          handleApplySurcharge={handleApplySurcharge}
+          posRefId={posRefId}
+          setPosRefId={setPosRefId}
+          surchargeAmount={surchargeAmount}
+          status="Unpaired"
+          errorMsg=""
+          onErrorMsg={onErrorMsg}
+        />
+      </Provider>
     );
 
     component.find('button#btnItemDec101').simulate('click');

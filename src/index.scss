@@ -3,9 +3,8 @@
 
 $theme-colors: (
   'primary': $primary,
-  'secondary': $tertiary
+  'secondary': $tertiary,
 );
-
 
 @import '~bootstrap/scss/bootstrap.scss';
 @import url('https://fonts.googleapis.com/css?family=IBM+Plex+Mono|Muli&display=swap');
@@ -68,9 +67,9 @@ div.sub-column {
   color: $primary;
 }
 
-button {
+button.product-display {
   padding: 0.5em;
-  width: 150px;
+  width: 155px;
 }
 
 button.primary-button {
@@ -90,8 +89,7 @@ label.form-check-label {
   margin-left: 0.5rem;
 }
 
-
 .btn.btn-primary[disabled] {
   background-color: $primaryGrey;
-  border-color: $primaryGrey ;
+  border-color: $primaryGrey;
 }

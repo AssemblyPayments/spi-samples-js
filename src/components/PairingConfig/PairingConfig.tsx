@@ -177,7 +177,6 @@ function PairingConfig({ isFinishedPairing, spi, status, setPairButton }: Props)
           />
           <div>
             <Checkbox
-              type="checkbox"
               id="ckbTestMode"
               label="Test Mode"
               disabled={!isFinishedPairing}
@@ -190,7 +189,6 @@ function PairingConfig({ isFinishedPairing, spi, status, setPairButton }: Props)
               }}
             />
             <Checkbox
-              type="checkbox"
               id="ckbSecureWebSockets"
               label="Secure WebSockets"
               disabled={window.location.protocol !== 'http:' || !isFinishedPairing}
@@ -203,7 +201,6 @@ function PairingConfig({ isFinishedPairing, spi, status, setPairButton }: Props)
               }}
             />
             <Checkbox
-              type="checkbox"
               id="ckbAutoAddress"
               label="Auto Address"
               disabled={window.location.protocol !== 'http:' || !isFinishedPairing}

@@ -4,7 +4,6 @@ import { Input } from '../Input';
 
 function handleKeyPress(event: KeyboardEvent) {
   if (event.key < '0' || event.key > '9') {
-    alert('invalid input');
     event.preventDefault();
     return false;
   }

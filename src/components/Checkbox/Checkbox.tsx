@@ -1,20 +1,13 @@
 import React from 'react';
 import './Checkbox.scss';
 
-function Checkbox(props: {
-  id: string;
-  label: string;
-  onChange: Function;
-  type: string;
-  checked: boolean;
-  disabled?: boolean;
-}) {
-  const { id, label, onChange, type, checked, disabled } = props;
+function Checkbox(props: { id: string; label: string; onChange: Function; checked: boolean; disabled?: boolean }) {
+  const { id, label, onChange, checked, disabled } = props;
   return (
     <div className={disabled ? 'text-muted' : ''}>
       <label htmlFor={id} className="container">
         <input
-          type={type}
+          type="checkbox"
           checked={checked}
           id={id}
           onChange={(e) => {

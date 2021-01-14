@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Col, Nav, Row, Tab } from 'react-bootstrap';
 import { ReactComponent as Logo } from '../../images/mx51.svg';
 import Products from '../../components/Products';
-import Pairing from '../../components/Pairing';
-import Setting from '../../components/Setting';
+import Terminals from '../../components/features/Terminals';
+
 import SpiService from './spiService';
 import './BurgerPos.scss';
 import Reversal from '../Reversal';
@@ -28,17 +28,9 @@ function BurgerPos() {
   const [inProgressPayment, setInProgressPayment] = useState(
     window.localStorage.getItem('payment_progress') === 'true'
   );
-  const [suppressMerchantPassword, setSuppressMerchantPassword] = useState(
-    window.localStorage.getItem('suppress_merchant_password_input') === 'true'
-  );
+
   const [openPricing, setOpenPricing] = useState(window.localStorage.getItem('open_pricing') === 'true');
 
-  const [pairingState, setPairingState] = useState({
-    AwaitingCheckFromPos: false,
-    ConfirmationCode: '',
-    Finished: true,
-    Message: '',
-  });
   const [statusState, setStatusState] = useState(spiService._spi.CurrentStatus);
 
   useEffect(() => {
@@ -50,7 +42,7 @@ function BurgerPos() {
     }
 
     return () => window.location.reload();
-  }, []);
+  }, [inProgressPayment]);
 
   const handleStatusChange = useCallback((event: any) => {
     setStatusState(event.detail);
@@ -87,10 +79,7 @@ function BurgerPos() {
                   <Nav.Link eventKey="sample">Sample POS</Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                  <Nav.Link eventKey="pairing">Pairing</Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link eventKey="setting">Setting</Nav.Link>
+                  <Nav.Link eventKey="terminals">Terminals</Nav.Link>
                 </Nav.Item>
                 {window.location.search.includes('qamode=true') && (
                   <Nav.Item>
@@ -104,37 +93,17 @@ function BurgerPos() {
             <Tab.Content>
               <Tab.Pane eventKey="sample">
                 <Products
-                  spi={spiService._spi}
                   status={statusState}
                   showUnknownModal={showUnknownModal}
                   setShowUnknownModal={setShowUnknownModal}
-                  suppressMerchantPassword={suppressMerchantPassword}
                   errorMsg={errorMsg}
                   onErrorMsg={setErrorMsg}
                   openPricing={openPricing}
                   setOpenPricing={setOpenPricing}
                 />
               </Tab.Pane>
-              <Tab.Pane eventKey="pairing">
-                <Pairing
-                  confirmationCode={pairingState.ConfirmationCode}
-                  isAwaitingConfirmation={pairingState.AwaitingCheckFromPos}
-                  isFinishedPairing={pairingState.Finished}
-                  status={statusState}
-                  spi={spiService._spi}
-                  message={pairingState.Message}
-                  setPairingState={setPairingState}
-                />
-              </Tab.Pane>
-              <Tab.Pane eventKey="setting">
-                <Setting
-                  spi={spiService._spi}
-                  status={statusState}
-                  errorMsg={errorMsg}
-                  onErrorMsg={setErrorMsg}
-                  suppressMerchantPassword={suppressMerchantPassword}
-                  setSuppressMerchantPassword={setSuppressMerchantPassword}
-                />
+              <Tab.Pane eventKey="terminals">
+                <Terminals errorMsg={errorMsg} onErrorMsg={setErrorMsg} />
               </Tab.Pane>
               <Tab.Pane eventKey="reversals">
                 <Reversal spi={spiService._spi} />

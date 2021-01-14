@@ -1,6 +1,9 @@
 import { shallow, mount } from 'enzyme';
+import { Provider } from 'react-redux';
+import * as redux from 'react-redux';
 import React from 'react';
 import OrderPay from './OrderPay';
+import store from '../../redux/store';
 
 describe('OrderPay', () => {
   let component: any;
@@ -16,17 +19,24 @@ describe('OrderPay', () => {
     const openPricing = false;
     const setOpenPricing = jest.fn();
     const transactionStatus = false;
+    const spy = jest.spyOn(redux, 'useSelector');
+    spy.mockReturnValue(true);
+
     component = mount(
-      <OrderPay
-        handleCreditCardPay={handleCreditCardPay}
-        handleMotoPay={handleMotoPay}
-        totalAmount={totalAmount}
-        promptCashout={promptCashout}
-        setPromptCashout={setPromptCashout}
-        openPricing={openPricing}
-        setOpenPricing={setOpenPricing}
-        transactionStatus={transactionStatus}
-      />
+      <Provider store={store}>
+        <OrderPay
+          handleCreditCardPay={handleCreditCardPay}
+          handleMotoPay={handleMotoPay}
+          totalAmount={totalAmount}
+          promptCashout={promptCashout}
+          setPromptCashout={setPromptCashout}
+          openPricing={openPricing}
+          setOpenPricing={setOpenPricing}
+          transactionStatus={transactionStatus}
+          status="Paired"
+          onErrorMsg={() => {}}
+        />
+      </Provider>
     );
   });
 

@@ -1,6 +1,8 @@
 import { shallow, mount } from 'enzyme';
+import { Provider } from 'react-redux';
 import React from 'react';
 import SettingConfig from './SettingConfig';
+import store from '../../redux/store';
 
 describe('SettingConfig', () => {
   let component: any;
@@ -10,11 +12,9 @@ describe('SettingConfig', () => {
     const setSuppressMerchantPassword = jest.fn();
     handleSaveSetting = jest.fn();
     component = mount(
-      <SettingConfig
-        handleSaveSetting={handleSaveSetting}
-        suppressMerchantPassword={suppressMerchantPassword}
-        setSuppressMerchantPassword={setSuppressMerchantPassword}
-      />
+      <Provider store={store}>
+        <SettingConfig handleSaveSetting={handleSaveSetting} terminal={{}} />
+      </Provider>
     );
   });
 
