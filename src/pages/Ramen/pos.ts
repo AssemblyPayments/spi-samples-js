@@ -53,7 +53,7 @@ class RamenPos extends Pos {
   private _sigFlowFromEftpos: boolean;
 
   private _apiKey: string | null;
-  private _acquirerCode: string;
+  private _tenantCode: string;
   private _autoResolveEftposAddress: boolean;
   private _testMode: boolean;
   private _useSecureWebSockets: boolean;
@@ -75,7 +75,7 @@ class RamenPos extends Pos {
 
     this._apiKey = null;
     this._serialNumber = '';
-    this._acquirerCode = 'wbc';
+    this._tenantCode = 'wbc';
     this._autoResolveEftposAddress = false;
     this._testMode = true;
     this._useSecureWebSockets = false;
@@ -93,7 +93,7 @@ class RamenPos extends Pos {
       this._spi.Config.SignatureFlowOnEftpos = this._sigFlowFromEftpos;
 
       this._spi.SetPosInfo('assembly', this._version);
-      this._spi.SetAcquirerCode(this._acquirerCode);
+      this._spi.SetAcquirerCode(this._tenantCode);
       this._spi.SetDeviceApiKey(this._apiKey);
 
       this._options = new TransactionOptions();
