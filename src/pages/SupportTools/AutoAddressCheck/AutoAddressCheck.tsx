@@ -76,7 +76,7 @@ async function fetchIp(
 }
 
 function webSocketFqdn(webFqdn: any, sn: string, tm: boolean, setWebSocketConnectionFqdn: any) {
-  const socket = new WebSocket(`wss://${webFqdn}`, 'spi.2.8.0');
+  const socket = new WebSocket(`wss://${webFqdn}`, 'spi.2.9.0');
 
   socket.onopen = (e: any) => {
     socket.send('success');
