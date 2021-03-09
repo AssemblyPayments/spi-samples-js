@@ -98,7 +98,7 @@ class Spi {
         name: 'Westpac Presto',
       },
       {
-        code: 'til',
+        code: 'till',
         name: 'Till Payments',
       },
     ];
