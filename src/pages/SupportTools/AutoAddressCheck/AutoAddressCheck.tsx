@@ -1,11 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Alert, Row, Col, Container } from 'react-bootstrap';
-import SpiService from '../../Burger/spiService';
+import React, { SyntheticEvent, useState, useEffect } from 'react';
+import { Spi as SpiClient } from '@mx51/spi-client-js';
+import { FormControl, FormGroup, Table, Alert, Row, Col, Container } from 'react-bootstrap';
 import { Input } from '../../../components/Input';
 import Checkbox from '../../../components/Checkbox';
 
+async function getTenantsList(setTenantList: Function) {
+  const tenants = await SpiClient.GetAvailableTenants('mx51-support-tool', 'mx51-support-tool', 'AU');
+  const defaultTenantList = [
+    {
+      code: 'wbc',
+      name: 'Westpac Presto',
+    },
+    {
+      code: 'till',
+      name: 'Till Payments',
+    },
+  ];
+
+  const tenantList = tenants.Data.length ? tenants.Data : defaultTenantList;
+  localStorage.setItem('tenants', JSON.stringify(tenantList));
+  setTenantList(tenantList);
+}
+
 async function fetchFqdn(
   sn: string,
+  tenant: string,
   tm: boolean,
   setFqdn: any,
   setTimeStampFqdn: any,
@@ -14,7 +33,7 @@ async function fetchFqdn(
   setGoogleDns: any,
   setWebSocketConnectionFqdn: any
 ) {
-  const response = await fetch(`https://device-address-api${tm ? '-sb' : ''}.wbc.mspenv.io/v1/${sn}/fqdn`, {
+  const response = await fetch(`https://device-address-api${tm ? '-sb' : ''}.${tenant}.mspenv.io/v1/${sn}/fqdn`, {
     headers: {
       'ASM-MSP-DEVICE-ADDRESS-API-KEY': 'DADDRTESTTOOL',
     },
@@ -49,13 +68,14 @@ async function fetchFqdn(
 
 async function fetchIp(
   sn: string,
+  tenant: string,
   tm: boolean,
   setIp: any,
   setTimeStampIp: any,
   setResult: any,
   setErrorResponse: any
 ) {
-  const response = await fetch(`https://device-address-api${tm ? '-sb' : ''}.wbc.mspenv.io/v1/${sn}/ip`, {
+  const response = await fetch(`https://device-address-api${tm ? '-sb' : ''}.${tenant}.mspenv.io/v1/${sn}/ip`, {
     headers: {
       'ASM-MSP-DEVICE-ADDRESS-API-KEY': 'DADDRTESTTOOL',
     },
@@ -94,6 +114,11 @@ function AutoAddressCheck() {
   const [ip, setIp] = useState('');
   const [timeStampFqdn, setTimeStampFqdn] = useState('');
   const [timeStampIp, setTimeStampIp] = useState('');
+  const [selectedTenantCode, setSelectedTenantCode] = useState('');
+  const [tenantList, setTenantList] = useState(JSON.parse(window.localStorage.getItem('tenants') || '[]'));
+  const [otherTenantCode, setOtherTenantCode] = useState(
+    !tenantList.find((tenant: Tenant) => tenant.code === selectedTenantCode) ? selectedTenantCode : ''
+  );
   const [testMode, setTestMode] = useState(false);
   const [result, setResult] = useState('');
   const [errorResponse, setErrorResponse] = useState({
@@ -112,19 +137,32 @@ function AutoAddressCheck() {
     const params = new URLSearchParams(window.location.search);
     const serialNumberFromUrl = params.get('sn');
     const testModeFromUrl = params.get('qa');
+    const tenantFromUrl = params.get('tenant');
 
     const sn = serialNumberFromUrl === null ? '' : serialNumberFromUrl;
     const tm = testModeFromUrl === 'true';
     setSerialNumber(sn);
     setTestMode(tm);
 
-    if (sn !== '') {
-      fetchResponse(sn, tm);
+    if (sn !== '' && tenantFromUrl) {
+      fetchResponse(sn, tenantFromUrl, tm);
     }
+
+    getTenantsList(setTenantList);
   }, []);
-  function fetchResponse(sn: string, tm: boolean) {
-    fetchFqdn(sn, tm, setFqdn, setTimeStampFqdn, setResult, setErrorResponse, setGoogleDns, setWebSocketConnectionFqdn);
-    fetchIp(sn, tm, setIp, setTimeStampIp, setResult, setErrorResponse);
+  function fetchResponse(sn: string, tenant: string, tm: boolean) {
+    fetchFqdn(
+      sn,
+      tenant,
+      tm,
+      setFqdn,
+      setTimeStampFqdn,
+      setResult,
+      setErrorResponse,
+      setGoogleDns,
+      setWebSocketConnectionFqdn
+    );
+    fetchIp(sn, tenant, tm, setIp, setTimeStampIp, setResult, setErrorResponse);
   }
   // Todo
   // function webSocketIp(webIp: any) {
@@ -142,6 +180,39 @@ function AutoAddressCheck() {
     <div className="w-100 p-3">
       <h2 className="sub-header">L2 Support and/or Merchants to test auto address</h2>
       <div className="w-50 m-auto">
+        <FormGroup>
+          <FormControl
+            as="select"
+            id="select-tenants"
+            name="tenants"
+            onChange={(e) => setSelectedTenantCode(e.currentTarget.value)}
+            style={{ height: '3.5rem' }}
+            type="select"
+            value={selectedTenantCode}
+          >
+            <option>Select a tenant</option>
+            {tenantList.map((tenant: Tenant) => (
+              <option key={tenant.code} value={tenant.code}>
+                {tenant.name}
+              </option>
+            ))}
+            <option value="other">Other</option>
+          </FormControl>
+        </FormGroup>
+        {selectedTenantCode === 'other' && (
+          <Input
+            id="otherTenant"
+            label="Other"
+            onChange={(e: SyntheticEvent<HTMLInputElement>) => {
+              setSelectedTenantCode('other');
+              setOtherTenantCode(e.currentTarget.value);
+            }}
+            name="otherTenant"
+            placeholder="Other"
+            value={otherTenantCode}
+          />
+        )}
+
         <Input
           id="inpSerialNum"
           name="Serial Number"
@@ -164,7 +235,13 @@ function AutoAddressCheck() {
             setResult('');
           }}
         />
-        <button type="button" className="primary-button" onClick={() => fetchResponse(serialNumber, testMode)}>
+        <button
+          type="button"
+          className="primary-button"
+          onClick={() =>
+            fetchResponse(serialNumber, selectedTenantCode !== 'other' ? selectedTenantCode : otherTenantCode, testMode)
+          }
+        >
           Resolve
         </button>
       </div>
