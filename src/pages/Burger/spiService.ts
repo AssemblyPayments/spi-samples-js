@@ -12,7 +12,7 @@ class Spi {
   _sigFlowFromEftpos: Boolean;
   _apiKey: any;
   _serialNumber: string;
-  _acquirerCode: string;
+  _tenantCode: string;
   _autoResolveEftposAddress: Boolean;
   _testMode: Boolean;
   _useSecureWebSockets: Boolean;
@@ -25,13 +25,13 @@ class Spi {
     this._eftposAddress = window.localStorage.getItem('eftpos_address') || '192.168.1.1';
     this._spiSecrets = null;
     this._options = null;
-    this._version = '2.8.2';
+    this._version = '2.9.0';
     this._rcptFromEftpos = window.localStorage.getItem('rcpt_from_eftpos') === 'true';
     this._sigFlowFromEftpos = window.localStorage.getItem('check-sig-eftpos') === 'true';
     this._printMerchantCopy = window.localStorage.getItem('print_merchant_copy_input') === 'true';
     this._apiKey = window.localStorage.getItem('api_key') || '';
     this._serialNumber = window.localStorage.getItem('serial') || '';
-    this._acquirerCode = window.localStorage.getItem('tenant_code') || '';
+    this._tenantCode = window.localStorage.getItem('tenant_code') || '';
     this._posName = 'mx51';
     this._autoResolveEftposAddress = window.localStorage.getItem('auto_address') === 'true';
     this._testMode = window.localStorage.getItem('test_mode') === 'true';
@@ -48,8 +48,8 @@ class Spi {
     }
 
     // Where there is an existing pairing and no tenant code set, default to wbc
-    if (!this._acquirerCode && this._spiSecrets) {
-      this._acquirerCode = 'wbc';
+    if (!this._tenantCode && this._spiSecrets) {
+      this._tenantCode = 'wbc';
       window.localStorage.setItem('tenant_code', 'wbc');
     }
 
@@ -63,7 +63,7 @@ class Spi {
       this._spi.Config.SignatureFlowOnEftpos = this._sigFlowFromEftpos;
       this._spi.Config.PrintMerchantCopy = this._printMerchantCopy;
       this._spi.SetPosInfo(this._posName, this._version);
-      this._spi.SetAcquirerCode(this._acquirerCode);
+      this._spi.SetTenantCode(this._tenantCode);
       this._spi.SetDeviceApiKey(this._apiKey);
       this._options = new TransactionOptions();
       this._options.SetCustomerReceiptHeader(window.localStorage.getItem('receipt_header_input') || '');
@@ -98,7 +98,7 @@ class Spi {
         name: 'Westpac Presto',
       },
       {
-        code: 'til',
+        code: 'till',
         name: 'Till Payments',
       },
     ];

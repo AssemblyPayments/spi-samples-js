@@ -17,11 +17,13 @@ function handleAutoAddressStateChangeCallback(
 ) {
   const deviceAddressStatus = event.detail;
   switch (deviceAddressStatus.DeviceAddressResponseCode) {
-    case DeviceAddressResponseCode.SUCCESS:
-      setEftpos(deviceAddressStatus.Address);
-      window.localStorage.setItem('eftpos_address', deviceAddressStatus.Address);
-      setErrorMsg(`Device Address has been updated to ${deviceAddressStatus.Address}`);
+    case DeviceAddressResponseCode.SUCCESS: {
+      const newEftposAddress = deviceAddressStatus.ip || deviceAddressStatus.fqdn;
+      setEftpos(newEftposAddress);
+      window.localStorage.setItem('eftpos_address', newEftposAddress);
+      setErrorMsg(`Device Address has been updated to ${newEftposAddress}`);
       break;
+    }
     case DeviceAddressResponseCode.INVALID_SERIAL_NUMBER:
       setEftpos('');
       window.localStorage.setItem('eftpos_address', '');
@@ -47,13 +49,13 @@ function pairingSaveSetting(
   eftpos: string
 ) {
   e.preventDefault();
-  spi.SetAutoAddressResolution(autoAddress);
-  spi.SetTestMode(testMode);
-  spi.SetSecureWebSockets(secureWebSocket);
   spi.SetPosId(posId);
   spi.SetSerialNumber(serial);
   spi.SetDeviceApiKey(apiKey);
   spi.SetEftposAddress(eftpos);
+  spi.SetTestMode(testMode);
+  spi.SetSecureWebSockets(secureWebSocket);
+  spi.SetAutoAddressResolution(autoAddress);
   window.localStorage.setItem('api_key', apiKey);
   window.localStorage.setItem('eftpos_address', eftpos);
   window.localStorage.setItem('posID', posId);
@@ -239,7 +241,7 @@ function PairingConfig({ isFinishedPairing, spi, status, setPairButton }: Props)
             required
             title="POS Id must be alphanumeric and less than 16 characters. Special characters and spaces not allowed"
             disabled={!isFinishedPairing || status !== SpiStatus.Unpaired}
-            defaultValue={posId}
+            value={posId}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setIsFormSaved(false);
               setPosId(e.target.value);
@@ -254,13 +256,13 @@ function PairingConfig({ isFinishedPairing, spi, status, setPairButton }: Props)
               setIsFormSaved(false);
               setApiKey(e.target.value);
             }}
-            defaultValue="BurgerPosDeviceAPIKey"
+            value="BurgerPosDeviceAPIKey"
           />
           <Input
             id="inpSerial"
             name="serial"
             label="Serial"
-            defaultValue={serial}
+            value={serial}
             placeholder="000-000-000"
             required={secureWebSocket}
             disabled={!isFinishedPairing}
@@ -275,8 +277,8 @@ function PairingConfig({ isFinishedPairing, spi, status, setPairButton }: Props)
             label="EFTPOS"
             placeholder="000.000.000.000"
             disabled={secureWebSocket || !isFinishedPairing}
-            required={!secureWebSocket}
-            defaultValue={eftpos}
+            required={!autoAddress}
+            value={eftpos}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setIsFormSaved(false);
               setEftpos(e.target.value);

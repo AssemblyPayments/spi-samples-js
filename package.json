@@ -1,6 +1,6 @@
 {
   "name": "spi-samples-js",
-  "version": "2.8.2",
+  "version": "2.9.0",
   "description": "Point of service samples which integrate with mx51 spi module",
   "main": "index.html",
   "author": "mx51",
@@ -27,12 +27,13 @@
     "build": "react-scripts build",
     "start": "react-scripts start",
     "test:coverage": "react-scripts test --env=jsdom --watchAll=false --coverage",
-    "test": "react-scripts test"
+    "test": "react-scripts test",
+    "postinstall": "cd \"node_modules/@mx51/spi-client-js/\" && npm i && npm run build"
   },
   "dependencies": {
     "@iconify/icons-fa-regular": "^1.0.5",
     "@iconify/react": "^1.1.3",
-    "@mx51/spi-client-js": "^2.8.2",
+    "@mx51/spi-client-js": "https://git@github.com/mx51/spi-client-js#feature/v2.9.0",
     "@types/enzyme": "^3.10.5",
     "@types/jest": "^25.2.1",
     "@types/react": "^16.9.32",
@@ -54,7 +55,7 @@
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-prettier": "^3.1.2",
     "eslint-plugin-react": "^7.19.0",
-    "eslint-plugin-react-hooks": "^3.0.0",
+    "eslint-plugin-react-hooks": "^2.5.1",
     "node-sass": "^4.14.1",
     "prettier": "^2.0.4",
     "prettier-eslint": "^9.0.1",
