@@ -26,9 +26,11 @@ function handleActionCallback(
   if (event.detail.Finished) {
     if (event.detail.Response.Data.error_reason === 'HOST_DECLINED') {
       setModel('Please enter currect date');
+      return;
     }
     if (event.detail.Response.Data.error_reason === 'OPERATION_IN_PROGRESS') {
       setModel('Please check your terminal is paired');
+      return;
     }
     let eventType = null;
     if (actionType === TransactionType.SettlementEnquiry) {

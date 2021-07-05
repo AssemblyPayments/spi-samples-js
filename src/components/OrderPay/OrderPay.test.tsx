@@ -6,6 +6,7 @@ describe('OrderPay', () => {
   let component: any;
   let handleCreditCardPay = jest.fn();
   let handleMotoPay = jest.fn();
+  let onErrorMsg = jest.fn();
 
   beforeEach(() => {
     handleCreditCardPay = jest.fn();
@@ -16,6 +17,8 @@ describe('OrderPay', () => {
     const openPricing = false;
     const setOpenPricing = jest.fn();
     const transactionStatus = false;
+    const status = 'PairedConnected';
+    onErrorMsg = jest.fn();
     component = mount(
       <OrderPay
         handleCreditCardPay={handleCreditCardPay}
@@ -26,6 +29,8 @@ describe('OrderPay', () => {
         openPricing={openPricing}
         setOpenPricing={setOpenPricing}
         transactionStatus={transactionStatus}
+        status={status}
+        onErrorMsg={onErrorMsg}
       />
     );
   });

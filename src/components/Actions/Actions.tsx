@@ -85,6 +85,7 @@ function Actions(props: {
       </Modal>
       <div className="ml-2 mr-2">
         <button
+          id="btnSettlement"
           type="button"
           className="btn btn-primary rounded-0 btn-block btn-lg"
           onClick={() => settlement(status, onErrorMsg, setActionType, receiptEl, flowEl, spi)}
@@ -92,6 +93,7 @@ function Actions(props: {
           Settlement
         </button>
         <button
+          id="btnSettlementEnquiry"
           type="button"
           className="btn btn-primary rounded-0 btn-block btn-lg"
           onClick={() => settlementEnquiry(status, onErrorMsg, setActionType, receiptEl, flowEl, spi)}
@@ -99,6 +101,7 @@ function Actions(props: {
           Settlement Enquiry
         </button>
         <button
+          id="btnTerminalStatus"
           type="button"
           className="btn btn-primary rounded-0 btn-block btn-lg"
           onClick={() => terminalStatus(status, onErrorMsg, receiptEl, spi, getTerminalStatus)}
